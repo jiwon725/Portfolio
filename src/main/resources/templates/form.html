@@ -133,10 +133,7 @@
                             ['image', 'link', 'blockquote'],
                             [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                             ['clean']
-                        ],
-                        handlers: {
-                            image: imageHandler
-                        }
+                        ]
                     }
                 }
             });
@@ -147,34 +144,7 @@
                 quill.clipboard.dangerouslyPasteHTML(initialHtml);
             }
 
-            // Custom Image Handler for Upload
-            function imageHandler() {
-                const input = document.createElement('input');
-                input.setAttribute('type', 'file');
-                input.setAttribute('accept', 'image/*');
-                input.click();
 
-                input.onchange = async () => {
-                    const file = input.files[0];
-                    const formData = new FormData();
-                    formData.append('image', file);
-
-                    try {
-                        const response = await fetch('/api/upload', {
-                            method: 'POST',
-                            body: formData
-                        });
-                        const data = await response.json();
-                        if (data.url) {
-                            const range = quill.getSelection();
-                            quill.insertEmbed(range.index, 'image', data.url);
-                        }
-                    } catch (e) {
-                        console.error('Image upload failed', e);
-                        alert('이미지 업로드에 실패했습니다.');
-                    }
-                };
-            }
 
             // Form Submit
             const form = document.getElementById('portfolio-form');

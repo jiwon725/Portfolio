@@ -17,8 +17,8 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable) // 포트폴리오 프로젝트의 간소화를 위해 CSRF 비활성화
             .authorizeHttpRequests((authorize) -> authorize
                 // 정적 자원 및 공개 페이지
-                .requestMatchers("/", "/detail/{id}", "/api/portfolio", "/uploads/**", "/style.css", "/script.js", "/h2-console/**").permitAll()
-                // 그 외 모든 요청(등록/수정 폼, 수정/삭제/업로드 API)은 인증 필요
+                .requestMatchers("/", "/detail/{id}", "/api/portfolio", "/style.css", "/script.js", "/h2-console/**").permitAll()
+                // 그 외 모든 요청(등록/수정 폼, 수정/삭제 API)은 인증 필요
                 .anyRequest().authenticated()
             )
             .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())) // H2 콘솔 사용을 위해 X-Frame-Options 비활성화
