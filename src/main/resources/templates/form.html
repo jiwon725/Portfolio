@@ -8,10 +8,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Quill WYSIWYG Editor -->
-    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-
+    <!-- Quill WYSIWYG Editor (v2) -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+    <!-- Quill Image Resize Module -->
+    <script src="https://cdn.jsdelivr.net/npm/@botom/quill-resize-module@2.0.0/dist/quill-resize-module.js"></script>
     <link rel="stylesheet" href="/style.css">
     <style>
         .form-section { padding-top: 100px; max-width: 900px; margin: 0 auto; padding-bottom: 4rem; }
@@ -121,10 +122,14 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Register Image Resize Module
+            Quill.register("modules/resize", window.QuillResizeModule);
+
             // Initialize Quill
             const quill = new Quill('#editor-container', {
                 theme: 'snow',
                 modules: {
+                    resize: {},
                     toolbar: {
                         container: [
                             [{ 'header': [1, 2, 3, false] }],
