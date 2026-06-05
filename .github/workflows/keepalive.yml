@@ -1,0 +1,19 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # 매월 6일마다 자정(00:00 UTC)에 실행됩니다. (6일 주기)
+    - cron: '0 0 */6 * *'
+  # 수동으로 원할 때 언제든 실행할 수 있는 옵션
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Portfolio Website
+        # 포트폴리오 웹사이트의 API를 호출하여 Render 서버를 깨우고 Supabase DB를 갱신합니다.
+        # 만약 Render 주소가 다르다면 아래 URL을 실제 주소로 변경해 주세요.
+        run: |
+          curl -sSf https://portfolio-yqga.onrender.com/api/portfolio > /dev/null
+          echo "Ping successful! Supabase will not be paused."
