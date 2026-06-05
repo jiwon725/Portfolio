@@ -54,6 +54,15 @@
             #editor-container { height: 300px; }
         }
     </style>
+    
+    <!-- Google Analytics -->
+    <script th:if="${@environment.getProperty('GA_ID')}" async th:src="'https://www.googletagmanager.com/gtag/js?id=' + ${@environment.getProperty('GA_ID')}"></script>
+    <script th:if="${@environment.getProperty('GA_ID')}" th:inline="javascript">
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', /*[[${@environment.getProperty('GA_ID')}]]*/ 'G-XXXXXXXXXX');
+    </script>
 </head>
 <body>
     <header class="header">
