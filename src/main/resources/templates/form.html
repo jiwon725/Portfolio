@@ -11,8 +11,8 @@
     <!-- Quill WYSIWYG Editor (v2) -->
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
-    <!-- Quill Image Resize Module -->
-    <script src="https://cdn.jsdelivr.net/npm/@botom/quill-resize-module@2.0.0/dist/quill-resize-module.js"></script>
+    <!-- Quill Blot Formatter for Drag Handles -->
+    <script src="https://cdn.jsdelivr.net/npm/quill-blot-formatter@1.0.5/dist/quill-blot-formatter.min.js"></script>
     <link rel="stylesheet" href="/style.css">
     <style>
         .form-section { padding-top: 100px; max-width: 900px; margin: 0 auto; padding-bottom: 4rem; }
@@ -123,13 +123,13 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Register Image Resize Module
-            Quill.register("modules/resize", window.QuillResizeModule);
+            Quill.register("modules/blotFormatter", QuillBlotFormatter.default);
 
             // Initialize Quill
             const quill = new Quill('#editor-container', {
                 theme: 'snow',
                 modules: {
-                    resize: {},
+                    blotFormatter: {},
                     toolbar: {
                         container: [
                             [{ 'header': [1, 2, 3, false] }],
