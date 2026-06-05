@@ -52,8 +52,8 @@ public class ApiController {
     }
 
     @GetMapping("/portfolio")
-    public List<PortfolioItem> getAll() {
-        return repository.findAll();
+    public List<PortfolioSummary> getAll() {
+        return repository.findAllProjectedBy();
     }
 
     @PostMapping("/portfolio")
