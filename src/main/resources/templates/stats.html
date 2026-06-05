@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 통계 대시보드 - Portfolio.</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .stats-wrapper {
+            max-width: 1200px;
+            margin: 100px auto 4rem;
+            padding: 0 2rem;
+            animation: fadeInUp 0.5s ease backwards;
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .filter-card {
+            background: #fff;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .filter-card input[type="date"] {
+            padding: 0.6rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: inherit;
+        }
+
+        .summary-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        .summary-table th {
+            background: var(--bg-color);
+            padding: 1.2rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .summary-table td {
+            padding: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        
+        .summary-table td.date-col {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .chart-card {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 4rem;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .section-title::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            background: var(--primary-color);
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <a href="/" class="logo">Portfolio.</a>
+            <div style="font-weight: 600; color: var(--primary-color);">관리자 대시보드</div>
+        </div>
+    </header>
+
+    <main class="stats-wrapper">
+        <div class="stats-header">
+            <h2>방문자 통계</h2>
+            <a href="/" class="btn btn-secondary">메인으로 돌아가기</a>
+        </div>
+
+        <div class="filter-card">
+            <div style="font-weight: 600;">통계기간</div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="date" id="startDate">
+                <span>~</span>
+                <input type="date" id="endDate">
+            </div>
+            <button class="btn btn-primary" id="btn-search" style="margin-left: auto;">조회</button>
+        </div>
+
+        <div class="section-title">방문현황 요약</div>
+        <div class="summary-card">
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>날짜</th>
+                        <th>방문자수(UV)</th>
+                        <th>방문횟수(PV)</th>
+                        <th>신규방문자수</th>
+                        <th>재방문자수</th>
+                        <th>방문당PV</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="date-col" id="sum-date">-</td>
+                        <td id="sum-uv">0</td>
+                        <td id="sum-pv">0</td>
+                        <td id="sum-new">0</td>
+                        <td id="sum-return">0</td>
+                        <td id="sum-avg">0</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section-title">방문현황 그래프</div>
+        <div class="chart-card">
+            <canvas id="statsChart" height="100"></canvas>
+        </div>
+    </main>
+
+    <script>
+        let myChart = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default dates (Last 7 days)
+            const endInput = document.getElementById('endDate');
+            const startInput = document.getElementById('startDate');
+            
+            const today = new Date();
+            const lastWeek = new Date();
+            lastWeek.setDate(today.getDate() - 6);
+
+            endInput.value = today.toISOString().split('T')[0];
+            startInput.value = lastWeek.toISOString().split('T')[0];
+
+            document.getElementById('btn-search').addEventListener('click', loadData);
+            
+            // Initial load
+            loadData();
+        });
+
+        async function loadData() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            try {
+                const response = await fetch(`/api/stats?startDate=${startDate}&endDate=${endDate}`);
+                const data = await response.json();
+                
+                updateSummary(data, startDate, endDate);
+                renderChart(data);
+            } catch (e) {
+                console.error(e);
+                alert('통계 데이터를 불러오는데 실패했습니다.');
+            }
+        }
+
+        function updateSummary(data, startDate, endDate) {
+            let totalUv = 0, totalPv = 0, totalNew = 0, totalReturn = 0;
+            
+            data.forEach(row => {
+                totalUv += row.visitorCount;
+                totalPv += row.visitCount;
+                totalNew += row.newVisitorCount;
+                totalReturn += row.returningVisitorCount;
+            });
+
+            document.getElementById('sum-date').innerText = `${startDate} ~ ${endDate}`;
+            document.getElementById('sum-uv').innerText = totalUv.toLocaleString();
+            document.getElementById('sum-pv').innerText = totalPv.toLocaleString();
+            document.getElementById('sum-new').innerText = totalNew.toLocaleString();
+            document.getElementById('sum-return').innerText = totalReturn.toLocaleString();
+            
+            const avg = totalUv === 0 ? 0 : (totalPv / totalUv).toFixed(2);
+            document.getElementById('sum-avg').innerText = avg;
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('statsChart').getContext('2d');
+            
+            const labels = data.map(row => row.visitDate);
+            const uvData = data.map(row => row.visitorCount);
+            const pvData = data.map(row => row.visitCount);
+            const newData = data.map(row => row.newVisitorCount);
+            const returnData = data.map(row => row.returningVisitorCount);
+
+            if(myChart) myChart.destroy();
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '방문횟수(PV)',
+                            data: pvData,
+                            borderColor: '#38bdf8',
+                            backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: '방문자수(UV)',
+                            data: uvData,
+                            borderColor: '#818cf8',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.3
+                        },
+                        {
+                            label: '신규방문자수',
+                            data: newData,
+                            borderColor: '#34d399',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.3
+                        },
+                        {
+                            label: '재방문자수',
+                            data: returnData,
+                            borderColor: '#fbbf24',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
